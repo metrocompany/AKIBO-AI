@@ -11,7 +11,7 @@ const upload = multer({
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
-// Currently active free endpoints on OpenRouter
+// Currently active free endpoints on OpenRouter (including vision-capable models)
 const AVAILABLE_MODELS = {
   'openrouter/free': {
     id: 'openrouter/free',
@@ -20,33 +20,26 @@ const AVAILABLE_MODELS = {
     contextWindow: '8k - 128k',
     description: 'Automatically routes to the best currently operational free model.'
   },
-  'openai/gpt-oss-20b:free': {
-    id: 'openai/gpt-oss-20b:free',
-    name: 'OpenAI gpt-oss 20B (Free)',
-    provider: 'OpenAI Open-Source',
-    contextWindow: '131k',
-    description: 'Ultra-fast, lightweight model great for coding, logic, and standard query tasks.'
-  },
-  'nvidia/nemotron-3-nano-30b-a3b:free': {
-    id: 'nvidia/nemotron-3-nano-30b-a3b:free',
-    name: 'NVIDIA Nemotron 3 Nano (Free)',
-    provider: 'NVIDIA',
-    contextWindow: '256k',
-    description: 'High-speed reasoning model optimized for structural data and analysis.'
-  },
   'google/gemma-4-31b-it:free': {
     id: 'google/gemma-4-31b-it:free',
-    name: 'Google Gemma 4 31B (Free)',
+    name: 'Google Gemma 4 31B (Free / Vision)',
     provider: 'Google AI',
     contextWindow: '262k',
-    description: 'Reliable all-rounder for long-context tasks, code analysis, and writing.'
+    description: 'Supports text, code, and image analysis.'
+  },
+  'meta-llama/llama-3.2-11b-vision-instruct:free': {
+    id: 'meta-llama/llama-3.2-11b-vision-instruct:free',
+    name: 'Llama 3.2 11B Vision (Free)',
+    provider: 'Meta AI',
+    contextWindow: '128k',
+    description: 'Multimodal model optimized for analyzing images and text.'
   },
   'meta-llama/llama-3.3-70b-instruct:free': {
     id: 'meta-llama/llama-3.3-70b-instruct:free',
     name: 'Llama 3.3 70B Instruct (Free)',
     provider: 'Meta AI',
     contextWindow: '128k',
-    description: 'Capable general purpose open-source reasoning model.'
+    description: 'Capable general purpose reasoning model.'
   }
 };
 
@@ -64,7 +57,7 @@ app.get('/', (req, res) => {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>AKIBO OS // FILE INTEGRATED AI CONSOLE</title>
+      <title>AKIBO OS // MULTIMODAL VISION AI CONSOLE</title>
       <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
       <style>
         :root {
@@ -185,7 +178,7 @@ app.get('/', (req, res) => {
           <div class="brand-logo">A</div>
           <div>
             <div class="brand-title">AKIBO OS</div>
-            <div class="brand-subtitle">MODEL GATEWAY v6.0</div>
+            <div class="brand-subtitle">VISION & FILE GATEWAY</div>
           </div>
         </div>
 
@@ -193,16 +186,15 @@ app.get('/', (req, res) => {
           <div class="section-label">Active Inference Engine</div>
           <select id="modelSelect" class="custom-select" onchange="updateModelInfo()">
             <option value="openrouter/free">AKIBO Core Auto (Free)</option>
-            <option value="openai/gpt-oss-20b:free">OpenAI gpt-oss 20B (Free)</option>
-            <option value="nvidia/nemotron-3-nano-30b-a3b:free">NVIDIA Nemotron 3 Nano (Free)</option>
-            <option value="google/gemma-4-31b-it:free">Google Gemma 4 31B (Free)</option>
+            <option value="google/gemma-4-31b-it:free">Google Gemma 4 31B (Free / Vision)</option>
+            <option value="meta-llama/llama-3.2-11b-vision-instruct:free">Llama 3.2 11B Vision (Free)</option>
             <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (Free)</option>
           </select>
 
           <div class="model-info-box" id="modelInfo">
             Provider: <span id="infoProvider">OpenRouter</span><br>
             Context: <span id="infoContext">Auto</span><br>
-            Desc: <span id="infoDesc">Auto-routes to currently functioning free models.</span>
+            Desc: <span id="infoDesc">Supports image & text tasks.</span>
           </div>
         </div>
 
@@ -211,7 +203,7 @@ app.get('/', (req, res) => {
           <div class="stats-container">
             <div class="stat-row"><span>Uptime:</span><span class="stat-value" id="statUptime">00:00:00</span></div>
             <div class="stat-row"><span>Requests:</span><span class="stat-value" id="statRequests">0</span></div>
-            <div class="stat-row"><span>Status:</span><span class="stat-value" style="color:var(--neon-green)">SECURE & CONNECTED</span></div>
+            <div class="stat-row"><span>Status:</span><span class="stat-value" style="color:var(--neon-green)">VISION ENABLED</span></div>
           </div>
         </div>
 
@@ -226,15 +218,15 @@ app.get('/', (req, res) => {
 
         <div class="section-label">Console Logs</div>
         <div class="sys-logs" id="sysLogs">
-          <div>[SYS] System initialised with security filter.</div>
-          <div>[SYS] Ready for prompts & files.</div>
+          <div>[SYS] Multimodal vision module loaded.</div>
+          <div>[SYS] Security filter active.</div>
         </div>
       </aside>
 
       <main>
         <header>
           <div class="status-badge">
-            <div class="indicator-dot"></div> SECURE READY
+            <div class="indicator-dot"></div> VISION READY
           </div>
           <button class="clear-btn" onclick="clearChat()">Clear Workspace</button>
         </header>
@@ -247,7 +239,7 @@ app.get('/', (req, res) => {
                 <span>SYSTEM AGENT</span>
                 <span>ONLINE</span>
               </div>
-              AKIBO OS secure workspace ready. File processing and safety filter protocols are active.
+              AKIBO OS multimodal workspace ready. You can now upload images and text files alongside your queries.
             </div>
           </div>
         </div>
@@ -259,10 +251,10 @@ app.get('/', (req, res) => {
           </div>
           <div class="input-box">
             <label class="file-upload-label" for="fileInput">
-              📎 <span>Attach</span>
+              📎 <span>Attach Image/File</span>
             </label>
-            <input type="file" id="fileInput" onchange="handleFileSelected(event)" />
-            <textarea id="userInput" placeholder="Transmit query or describe uploaded file..." onkeydown="handleKeyPress(event)"></textarea>
+            <input type="file" id="fileInput" accept="image/*,.txt,.js,.json,.md,.html,.css" onchange="handleFileSelected(event)" />
+            <textarea id="userInput" placeholder="Ask about an image or document..." onkeydown="handleKeyPress(event)"></textarea>
             <button class="send-btn" onclick="sendMessage()">Transmit</button>
           </div>
         </footer>
@@ -352,7 +344,7 @@ app.get('/', (req, res) => {
           messageHistory.push({ role: 'user', content: displayPrompt });
 
           const botMessageId = 'msg-' + Date.now();
-          appendMessage('assistant', 'AKIBO (' + model.split('/')[1] + ')', 'Processing security & query...', botMessageId);
+          appendMessage('assistant', 'AKIBO (' + model.split('/')[1] + ')', 'Analyzing visual/text data...', botMessageId);
 
           requestCounter++;
           document.getElementById('statRequests').innerText = requestCounter;
@@ -363,16 +355,23 @@ app.get('/', (req, res) => {
               body: formData
             });
 
-            const data = await response.json();
+            const rawText = await response.text();
+            let data;
+            try {
+              data = JSON.parse(rawText);
+            } catch (e) {
+              throw new Error("Server error (Status " + response.status + "): " + rawText.substring(0, 100));
+            }
+
             const botBubble = document.getElementById(botMessageId);
 
-            if (data.reply) {
+            if (response.ok && data.reply) {
               botBubble.innerText = data.reply;
               messageHistory.push({ role: 'assistant', content: data.reply });
               logEvent('Inference complete.');
             } else {
-              botBubble.innerText = 'Error: ' + (data.error || 'Failed to parse model response.');
-              logEvent('API warning or block encountered.');
+              botBubble.innerText = 'Error: ' + (data.error || 'Failed to process request.');
+              logEvent('API error encountered.');
             }
           } catch (err) {
             document.getElementById(botMessageId).innerText = 'Network Error: ' + err.message;
@@ -424,7 +423,7 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Secure Chat Endpoint with Malware and Malicious Keyword Filter
+// Secure Endpoint supporting Text, Code, and Vision/Images
 app.post('/api/v1/chat', upload.single('file'), async (req, res) => {
   SYSTEM_STATE.totalRequestsProcessed++;
 
@@ -432,18 +431,16 @@ app.post('/api/v1/chat', upload.single('file'), async (req, res) => {
     const { model, prompt } = req.body;
     let finalPrompt = prompt || '';
 
-    // --- BUILT-IN SECURITY FILTER ---
+    // --- SECURITY FILTER ---
     const maliciousKeywords = ['malware', 'ransomware', 'keylogger', 'exploit payload', 'ddos script', 'trojan'];
     const lowerPrompt = finalPrompt.toLowerCase();
     
-    const isMalicious = maliciousKeywords.some(keyword => lowerPrompt.includes(keyword));
-    if (isMalicious) {
+    if (maliciousKeywords.some(keyword => lowerPrompt.includes(keyword))) {
       SYSTEM_STATE.failedRequests++;
       return res.status(403).json({ 
         error: 'Security Policy Violation: Prompt flagged for prohibited malicious content.' 
       });
     }
-    // --------------------------------
 
     let messages = [];
     if (req.body.messages) {
@@ -454,15 +451,31 @@ app.post('/api/v1/chat', upload.single('file'), async (req, res) => {
       }
     }
 
+    let userContent = finalPrompt;
+
+    // Handle File / Image Uploads
     if (req.file) {
-      const fileBuffer = req.file.buffer.toString('utf-8');
-      finalPrompt += `\n\n--- ATTACHED FILE CONTEXT (${req.file.originalname}) ---\n${fileBuffer}\n--- END ATTACHED FILE ---`;
+      const mimeType = req.file.mimetype;
+      if (mimeType.startsWith('image/')) {
+        // Convert image to base64 data URL for Vision models
+        const base64Image = req.file.buffer.toString('base64');
+        const dataUrl = `data:${mimeType};base64,${base64Image}`;
+        
+        userContent = [
+          { type: "text", text: finalPrompt || "Describe or analyze this image." },
+          { type: "image_url", image_url: { url: dataUrl } }
+        ];
+      } else {
+        // Handle normal text/code files
+        const fileBuffer = req.file.buffer.toString('utf-8');
+        userContent += `\n\n--- ATTACHED FILE CONTEXT (${req.file.originalname}) ---\n${fileBuffer}\n--- END ATTACHED FILE ---`;
+      }
     }
 
     if (messages.length > 0 && messages[messages.length - 1].role === 'user') {
-      messages[messages.length - 1].content = finalPrompt;
+      messages[messages.length - 1].content = userContent;
     } else {
-      messages.push({ role: 'user', content: finalPrompt });
+      messages.push({ role: 'user', content: userContent });
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
@@ -514,6 +527,6 @@ app.post('/api/v1/chat', upload.single('file'), async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`==================================================`);
-  console.log(`🚀 AKIBO OS SECURE RUNNING: http://localhost:${PORT}`);
+  console.log(`🚀 AKIBO VISION OS RUNNING: http://localhost:${PORT}`);
   console.log(`==================================================`);
 });
